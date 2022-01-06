@@ -1,0 +1,120 @@
+---
+knit: pagedown::chrome_print
+output:
+  pagedown::html_paged:
+    self_contained: TRUE
+    number_sections: FALSE
+    fig_caption: TRUE
+    css: ["css/simple-report-style.css", "css/simple-report-page.css", "css/simple-report-default.css"]
+paged-footnotes: TRUE
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE,
+                      warning = FALSE,
+                      error = FALSE,
+                      fig.topcaption = TRUE,
+                      fig.cap = TRUE,
+                      dpi = 150)
+library(tidyverse)
+library(flextable)
+library(knitr)
+library(omni)
+library(scales)
+library(santoku)
+```
+
+
+# First Level Header
+
+Quis nisi deserunt cillum aliquip nostrud laborum quis et sit mollit qui minim duis quis velit. Consectetur sint dolore laborum. Magna nostrud minim labore. Minim in occaecat dolor. Cillum magna do nulla eu sunt. Officia incididunt enim duis reprehenderit. Id eiusmod laboris exercitation non ea sint labore officia excepteur qui cupidatat consectetur est dolore occaecat. Occaecat laborum quis deserunt irure eiusmod deserunt quis irure aliquip aliqua reprehenderit nisi excepteur commodo. Ad nostrud est incididunt nisi consequat duis Lorem non esse Lorem proident nisi nisi. Excepteur excepteur ea labore fugiat ipsum anim aliqua consectetur.
+
+```{r}
+text <- tibble(
+  year = seq(2000, 2020, 1),
+  long_text = "Laborum proident sit anim duis culpa elit est aliquip culpa aliquip."
+)
+```
+
+\newpage
+
+```{r}
+big_table <- text %>%
+  omni_table(table_name = "test", use_image = FALSE)
+```
+
+```{r}
+# big_table
+```
+
+
+```{r include = FALSE}
+big_table %>% 
+  dim() 
+
+
+big_table_dimensions <- big_table %>%
+  dim() 
+
+big_table_heights <- big_table_dimensions$heights %>% 
+  as_tibble() %>% 
+  slice(-1) %>% 
+  set_names("row_height") %>% 
+  mutate(row_id = row_number()) %>% 
+  mutate(cumulative_height = cumsum(row_height)) %>% 
+  mutate(table_number = kiru(cumulative_height, 
+                             breaks = seq(0, 49, 7),
+                             labels = c("1", "2", "3", "4", "5", "6", "7")))
+
+```
+
+
+\newpage
+
+```{r}
+# text %>% 
+#   bind_cols(big_table_heights) %>% 
+#   filter(table_number == 1) %>% 
+#   select(year, long_text) %>% 
+#   omni_table(table_name = "test", use_image = FALSE)
+```
+
+```{r}
+text_with_table_number <- text %>% 
+  bind_cols(big_table_heights) %>% 
+  select(year, long_text, table_number)
+
+display_single_table <- function(table_number_to_filter) {
+  
+  text_with_table_number %>% 
+    filter(table_number == table_number_to_filter) %>% 
+    select(-table_number) %>% 
+    omni_table(table_name = "test", use_image = FALSE)
+  
+}
+
+tables <- text_with_table_number %>%
+  distinct(table_number) %>% 
+  pull(table_number) %>% 
+  as.numeric()
+
+
+
+# display_single_table(table_number_to_filter = 1)
+
+```
+
+```{r results='asis', collapse=TRUE}
+walk(tables, display_single_table)
+```
+
+
+
+```{r results='asis', fig.keep = 'all'}
+for(i in 1:max(tables)) {
+  display_single_table(i)
+}
+```
+
+
+
