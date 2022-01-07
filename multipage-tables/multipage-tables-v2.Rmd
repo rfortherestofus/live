@@ -39,9 +39,11 @@ Let's make a function to show just a portion of the data in a table at a time.
 ```{r}
 filtered_table <- function(start_row) {
   
-  fake_data %>% 
+  table <- fake_data %>% 
     filter(between(row_number, start_row, start_row + 10)) %>% 
     flextable()
+  
+  flextable_to_rmd(table)
   
 }
 ```
@@ -54,7 +56,7 @@ filtered_table(1)
 
 But what I really want to do is have the code chunk generate two (or more) tables. I tried doing it with the code below, but no dice. It doesn't show anything when rendered.
 
-```{r}
+```{r results='asis'}
 start_rows <- c(1, 11)
 
 walk(start_rows, filtered_table)
