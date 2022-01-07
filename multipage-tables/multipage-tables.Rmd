@@ -86,10 +86,12 @@ text_with_table_number <- text %>%
 
 display_single_table <- function(table_number_to_filter) {
   
-  text_with_table_number %>% 
+  table_to_print <- text_with_table_number %>% 
     filter(table_number == table_number_to_filter) %>% 
     select(-table_number) %>% 
     omni_table(table_name = "test", use_image = FALSE)
+  
+  print(table_to_print)
   
 }
 
@@ -98,22 +100,20 @@ tables <- text_with_table_number %>%
   pull(table_number) %>% 
   as.numeric()
 
-
-
-# display_single_table(table_number_to_filter = 1)
+display_single_table(table_number_to_filter = 1)
 
 ```
 
-```{r results='asis', collapse=TRUE}
+```{r results='asis'}
 walk(tables, display_single_table)
 ```
 
 
 
 ```{r results='asis', fig.keep = 'all'}
-for(i in 1:max(tables)) {
-  display_single_table(i)
-}
+# for(i in 1:max(tables)) {
+#   display_single_table(i)
+# }
 ```
 
 

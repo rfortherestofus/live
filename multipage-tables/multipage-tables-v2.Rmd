@@ -1,0 +1,62 @@
+---
+title: "Multipage Tables"
+output: pagedown::html_paged
+knit: pagedown::chrome_print
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE,
+                      warning = FALSE,
+                      message = FALSE,
+                      error = FALSE)
+```
+
+```{r}
+library(tidyverse)
+library(flextable)
+```
+
+Here's some fake data.
+
+```{r}
+fake_data <- tibble(
+  year = seq(2000, 2020, 1),
+  long_text = "Laborum proident sit anim duis culpa elit est aliquip culpa aliquip."
+) %>% 
+  mutate(row_number = row_number())
+```
+
+If I make a table from it, it flows across multiple pages and the formatting gets messed up.
+
+```{r}
+fake_data %>% 
+  flextable()
+```
+
+
+Let's make a function to show just a portion of the data in a table at a time. 
+
+```{r}
+filtered_table <- function(start_row) {
+  
+  fake_data %>% 
+    filter(between(row_number, start_row, start_row + 10)) %>% 
+    flextable()
+  
+}
+```
+
+I can use this function to make a table with 11 rows.
+
+```{r}
+filtered_table(1)
+```
+
+But what I really want to do is have the code chunk generate two (or more) tables. I tried doing it with the code below, but no dice. It doesn't show anything when rendered.
+
+```{r}
+start_rows <- c(1, 11)
+
+walk(start_rows, filtered_table)
+```
+
