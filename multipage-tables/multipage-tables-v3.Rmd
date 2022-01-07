@@ -28,17 +28,38 @@ library(santoku)
 
 
 
-```{r results='asis'}
+```{r}
 text <- tibble(
   year = seq(2000, 2020, 1),
-  long_text = "Laborum proident sit anim duis culpa elit est aliquip culpa aliquip."
+  long_text = "Laborum cupidatat velit dolor. Lorem minim enim id elit reprehenderit qui ea velit irure. Labore laborum anim eiusmod. Eiusmod cillum ad proident magna Lorem ipsum irure consectetur id ipsum sint ad occaecat nostrud. Amet aute fugiat nisi sunt cillum sunt irure. Duis laborum laboris ullamco proident aliquip incididunt id tempor exercitation velit ad nisi laboris do in. Exercitation tempor minim aute sint dolore duis voluptate. Duis consectetur adipisicing nostrud aliquip velit adipisicing officia sunt irure nostrud commodo consequat Lorem ipsum. Nisi proident ullamco elit esse amet qui duis ullamco. Duis aute aliqua laboris labore officia aliquip."
 )
 ```
 
+# Bad Multipage Table
+
+This breaks weird across tables.
+
+```{r}
+text %>% 
+  flextable()
+```
+
+\newpage
+
+# Good Multipage Tables
+
+But this doesn't!
+
+```{r eval = FALSE}
+df <- text
+max_table_height <- 4
+```
+
+
 ```{r results='asis'}
-multipage_table <- function(df) {
+multipage_table <- function(df, max_table_height = 4) {
   
-  add_table_numbers <- function(df, max_table_height = 4) {
+  add_table_numbers <- function(df) {
     
     table <- df %>% 
       flextable()
@@ -89,10 +110,6 @@ multipage_table <- function(df) {
   
 }
 ```
-
-
-
-\newpage
 
 ```{r results='asis'}
 multipage_table(text)
