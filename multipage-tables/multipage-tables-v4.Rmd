@@ -1,0 +1,108 @@
+---
+title: "A Multi-page HTML Document"
+author: "Yihui Xie and Romain Lesur"
+date: "`r Sys.Date()`"
+output:
+  pagedown::html_paged:
+    toc: true
+    # change to true for a self-contained document, but it'll be a litte slower for Pandoc to render
+    self_contained: false
+# uncomment this line to produce HTML and PDF in RStudio:
+knit: pagedown::chrome_print
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE,
+                      warning = FALSE,
+                      message = FALSE)
+```
+
+```{r}
+library(tidyverse)
+library(flextable)
+library(knitr)
+library(omni)
+library(scales)
+library(santoku)
+```
+
+
+```{r}
+multipage_table <- function(df, max_table_height) {
+  
+  # First, we calculate the dimensions of the table
+  table_dimensions <- df %>% 
+    flextable() %>% 
+    
+    # Use dim_pretty() function to calculate dimensions
+    # This function will return the heights that will be created using the autofit() function when we display the table
+    dim_pretty(part = "body")
+  
+  # We use table_dimensions to calculate the heights of each row
+  table_row_heights <- table_dimensions$heights %>%
+    as_tibble() %>% 
+    set_names("row_height")
+  
+  # Then we add a column to our original data frame with the height of each row
+  table_with_dimensions <- df %>% 
+    bind_cols(table_row_heights)
+  
+  # We also need the height of the header row
+  
+  header_dimensions <- df %>% 
+    flextable() %>% 
+    
+    # Use dim_pretty() function to calculate dimensions
+    # This function will return the heights that will be created using the autofit() function when we display the table
+    dim_pretty(part = "header") 
+  
+  header_row_height <- header_dimensions$heights
+  
+  
+  df_with_table_numbers <- table_with_dimensions %>%
+    mutate(cumulative_height = cumsum(row_height)) %>%
+    mutate(total_height = max(cumulative_height)) %>% 
+    
+    # We calculate the table numbers by cutting the data
+    # The table number starts at 1. Any time the cumulative height goes over the max_table_height - the header row height,
+    # it moves to the next table number
+    mutate(table_number = kiru(cumulative_height,
+                               breaks = seq(0, max(.$total_height), max_table_height - header_row_height))) %>% 
+    
+    mutate(table_number = as.numeric(table_number)) %>% 
+    select(-c(row_height, cumulative_height, total_height))
+  
+  table_numbers <- df_with_table_numbers %>% 
+    distinct(table_number) %>% 
+    pull(table_number)
+  
+  single_table <- function(table_number_to_filter) {
+    
+    cat("\\newpage")
+    
+    df_with_table_numbers %>% 
+      filter(table_number == table_number_to_filter) %>% 
+      select(-table_number) %>% 
+      flextable() %>% 
+      autofit() %>% 
+      flextable_to_rmd()
+    
+  }
+  
+  walk(table_numbers, single_table)
+  
+}
+```
+
+```{r results='asis'}
+text <- tibble(
+  year = seq(2000, 2020, 1),
+  long_text = "Laborum cupidatat velit dolor. Lorem minim enim id elit reprehenderit qui ea velit irure. Labore laborum anim eiusmod. Eiusmod cillum ad proident magna Lorem ipsum irure consectetur id ipsum sint ad occaecat nostrud. Amet aute fugiat nisi sunt cillum sunt irure. Duis laborum laboris ullamco proident aliquip incididunt id tempor exercitation velit ad nisi laboris do in. Exercitation tempor minim aute sint dolore duis voluptate. Duis consectetur adipisicing nostrud aliquip velit adipisicing officia sunt irure nostrud commodo consequat Lorem ipsum. Nisi proident ullamco elit esse amet qui duis ullamco. Duis aute aliqua laboris labore officia aliquip."
+)
+
+
+
+multipage_table(text, max_table_height = 1)
+```
+
+

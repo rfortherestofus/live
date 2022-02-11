@@ -53,11 +53,33 @@ But this doesn't!
 ```{r eval = FALSE}
 df <- text
 max_table_height <- 4
+
+table <- text %>% 
+  omni::omni_table("test", use_image = FALSE)
+
+table_dimensions <- table %>%
+  dim_pretty()
+
+table_row_heights <- table_dimensions$heights %>%
+  as_tibble() %>% 
+  # Remove header
+  slice(-1) 
+%>% 
+  set_names("row_height") %>%
+  mutate(row_id = row_number()) %>%
+  mutate(cumulative_height = cumsum(row_height)) %>%
+  mutate(total_height = max(cumulative_height)) %>% 
+  mutate(table_number = kiru(cumulative_height,
+                             breaks = seq(0, max(.$total_height), max_table_height))) %>% 
+  mutate(table_number = as.numeric(table_number)) 
 ```
 
 
+
+
+
 ```{r results='asis'}
-multipage_table <- function(df, max_table_height = 4) {
+multipage_table <- function(df, max_table_height = 1) {
   
   add_table_numbers <- function(df) {
     
@@ -65,7 +87,7 @@ multipage_table <- function(df, max_table_height = 4) {
       flextable()
     
     table_dimensions <- table %>%
-      dim() 
+      dim_pretty()
     
     table_row_heights <- table_dimensions$heights %>%
       as_tibble() %>% 
@@ -78,10 +100,10 @@ multipage_table <- function(df, max_table_height = 4) {
       mutate(table_number = kiru(cumulative_height,
                                  breaks = seq(0, max(.$total_height), max_table_height))) %>% 
       mutate(table_number = as.numeric(table_number)) 
-    
+  
     text_with_table_number <- df %>% 
       bind_cols(table_row_heights) %>% 
-      select(year, long_text, table_number)
+      select(year, long_text, table_number, row_height, cumulative_height, total_height)
     
     text_with_table_number
     
@@ -91,13 +113,13 @@ multipage_table <- function(df, max_table_height = 4) {
   
   tables <- text_with_table_numbers %>% 
     distinct(table_number) %>% 
-      pull(table_number)
+    pull(table_number)
   
   display_single_table <- function(table_number_to_filter) {
     
     table_to_print <- text_with_table_numbers %>% 
       filter(table_number == table_number_to_filter) %>% 
-      select(-table_number) %>% 
+      select(-c(table_number:total_height)) %>% 
       flextable()
     
     flextable_to_rmd(table_to_print)
@@ -111,8 +133,15 @@ multipage_table <- function(df, max_table_height = 4) {
 }
 ```
 
+```{r}
+text %>% 
+  slice(1:2) %>% 
+  multipage_table()
+```
+
+
 ```{r results='asis'}
-multipage_table(text)
+multipage_table(text, max_table_height = 1.25)
 ```
 
 
